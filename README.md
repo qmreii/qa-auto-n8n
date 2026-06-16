@@ -22,7 +22,8 @@ An automated Telegram bot that parses unstructured user feedback and formats it 
 4. If bug: Routes to the Bug Report Generator (LLM) to extract testing parameters and output a structured Markdown report.
 
 ## Demo
-*(Закинь сюди свої скріншоти)*
+<img width="1087" height="554" alt="{52C26466-777F-4C5B-94AD-E3D8975DA647}" src="https://github.com/user-attachments/assets/01a94cdb-6ee9-4a1a-8fc7-9a0e06aa633b" />
+<img width="909" height="644" alt="{09306091-12E8-4EF0-8E30-6EA6804FBBA3}" src="https://github.com/user-attachments/assets/c13c498e-4dc9-4ead-a7d5-5ba7709dc456" />
 
 ## Setup
 1. Import `workflow.json` into your n8n instance.
