@@ -26,36 +26,14 @@
     {
       "parameters": {
         "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
-        "text": "={{ $json.content.parts[0].text }}",
-        "additionalFields": {}
-      },
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        1312,
-        128
-      ],
-      "id": "c90687a2-3723-42d4-8a87-0c4b7ef36fe3",
-      "name": "Send a text message",
-      "webhookId": "4cbe77c4-e76a-4e49-a90c-d4e5a9ae76f3",
-      "credentials": {
-        "telegramApi": {
-          "id": "TcA86TPyV3PS605h",
-          "name": "Telegram account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
         "text": "Hi! 👋 I'm a specialized Smart Bug Tracker, not a conversational chatbot. Please describe the technical issue or bug you've encountered, and I will automatically generate a perfectly formatted report for the development team!",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        960,
-        384
+        912,
+        176
       ],
       "id": "420e7e5f-1f52-4318-af32-024556f8e48b",
       "name": "Send a text message1",
@@ -112,7 +90,7 @@
         "messages": {
           "values": [
             {
-              "content": "=You are a Senior QA Engineer. Your task is to transform this chaotic user problem description into a professional bug report.\n\nUser message: {{ $('Telegram Trigger').item.json.message.text }}\n\nFormat the response strictly according to the following structure (use Markdown for bold text):\nTitle: [Brief essence of the problem in one sentence]\nEnvironment: [Guess from the text: Web, iOS, Android, or write Not specified]\nSteps to Reproduce: > 1. [Step 1]\n2. [Step 2]\nExpected Result: [How the system should logically behave]\nActual Result: [What actually happened based on the user's description]",
+              "content": "=You are a professional QA Engineer. Analyze the user's bug report and convert it into a structured JSON format suitable for a Notion database.\n\nFollow these strict rules:\n1. Extract the 'title' (a concise summary).\n2. Determine 'severity' (pick ONE from: Blocker, Major, Minor).\n3. Draft 'steps' (reproduction steps as a clear list).\n4. Identify 'expected' (the expected behavior).\n5. Extract 'environment' (choose ONE from: iOS, Android, Web, Desktop).\n\nOutput MUST be a valid JSON object only. Do not include any extra text.\n\nInput bug report:\n{{ $json.message.text }}",
               "role": "model"
             },
             {
@@ -126,11 +104,14 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1.2,
       "position": [
-        960,
-        128
+        896,
+        -16
       ],
       "id": "8216c540-e52c-44b5-ae30-aef34ba86555",
       "name": "Bug Report Generator",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
       "credentials": {
         "googlePalmApi": {
           "id": "Vl1glqYadPjud96i",
@@ -165,11 +146,98 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        704,
-        144
+        496,
+        0
       ],
       "id": "fb4ce5db-268c-4af0-a848-35896f980ce8",
       "name": "Check If BUG"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Your request has been successfully processed and added to the QA tracker. Status: Pending.  Thank you for your contribution to product quality!",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        704,
+        -16
+      ],
+      "id": "f2f676a3-d3cf-4246-88e6-2a2322ebc4a6",
+      "name": "Send a text message",
+      "webhookId": "ca921b66-a0a8-453b-980b-72cb60097c80",
+      "credentials": {
+        "telegramApi": {
+          "id": "TcA86TPyV3PS605h",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "38135829-4867-807c-97fe-f676b109a72f",
+          "mode": "list",
+          "cachedResultName": "qa database",
+          "cachedResultUrl": "https://app.notion.com/p/381358294867807c97fef676b109a72f"
+        },
+        "title": "={{ $json.title }}",
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Bug title|title",
+              "title": "={{ $json.title }}"
+            },
+            {
+              "key": "Environment|select",
+              "selectValue": "={{ $json.environment }}"
+            },
+            {
+              "key": "Expected result|rich_text",
+              "textContent": "={{ $json.expected }}"
+            },
+            {
+              "key": "Severity|select",
+              "selectValue": "={{ $json.severity }}"
+            },
+            {
+              "key": "Steps to Reproduce|rich_text",
+              "textContent": "={{ $json.steps.join('\\n') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        1408,
+        -16
+      ],
+      "id": "090cb6e2-4030-4a27-bc41-b519442bd138",
+      "name": "Create a database page",
+      "credentials": {
+        "notionApi": {
+          "id": "evLrsNBZVnsiZemP",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rawText = items[0].json.content.parts[0].text;\n\n// Замість складних регулярок просто видалимо зайве вручну\nlet cleanText = rawText.replace(\"```json\", \"\").replace(\"```\", \"\").trim();\n\nreturn { json: JSON.parse(cleanText) };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1232,
+        -16
+      ],
+      "id": "934bab89-bda6-488b-b6de-2b01ccb5f07a",
+      "name": "Code in JavaScript"
     }
   ],
   "connections": {
@@ -199,7 +267,7 @@
       "main": [
         [
           {
-            "node": "Send a text message",
+            "node": "Code in JavaScript",
             "type": "main",
             "index": 0
           }
@@ -210,7 +278,7 @@
       "main": [
         [
           {
-            "node": "Bug Report Generator",
+            "node": "Send a text message",
             "type": "main",
             "index": 0
           }
@@ -218,6 +286,28 @@
         [
           {
             "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [
+          {
+            "node": "Bug Report Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create a database page",
             "type": "main",
             "index": 0
           }
